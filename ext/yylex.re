@@ -83,6 +83,7 @@ void yylex(VALUE self, cast_Parser *p) {
     any      = [\000-\377];
     O        = [0-7];
     D        = [0-9];
+    B        = [01];
     H        = [a-fA-F0-9];
     N        = [1-9];
     L        = [a-zA-Z_];
@@ -163,6 +164,15 @@ void yylex(VALUE self, cast_Parser *p) {
         }
         RETVALUE(cast_sym_ICON);
     }
+    "0" [bB] B+ IS? {
+        value = cast_new_IntLiteral_at(p->lineno);
+        cast_IntLiteral_set_format(value, ID2SYM(rb_intern("bin")));
+        cast_IntLiteral_set_val(value, LONG2NUM(strtol(p->tok, (char **)&cp, 2)));
+        if (cp < cursor)
+            cast_IntLiteral_set_suffix(value, rb_str_new(cp, cursor - cp));
+        RETVALUE(cast_sym_ICON);
+    }
+
     ( "0" | [1-9] D* ) IS?  {
         value = cast_new_IntLiteral_at(p->lineno);
         cast_IntLiteral_set_format(value, ID2SYM(rb_intern("dec")));

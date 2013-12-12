@@ -165,8 +165,42 @@ VALUE cast_Parser_next_token(VALUE self) {
   if (rb_ary_entry(self_p->token, 0) == Qnil)
     return Qnil;
 
+  //////////////////////////////////////////////
+  static int line = 0;
+  static int col = 0;
+  int new_line;
+  char* str_line = self_p->bot;
+  char* str_token = self_p->tok;
+
+  for (new_line = 0; new_line < (self_p->lineno - 1) && str_line; str_line = strstr(str_line, "\n") + 1, new_line++);
+
+  if (new_line > line)
+    col = 0;
+  line = new_line;
+
+  str_line = strdup(str_line);
+  str_token = strdup(str_token);
+  str_line[(strchr(str_line, '\n') ? strchr(str_line, '\n') : strchr(str_line, '\0')) - str_line] = '\0';
+  str_token[(strchr(str_token, '\n') ? strchr(str_token, '\n') : strchr(str_token, '\0')) - str_token] = '\0';
+
+  if (strstr(&(str_line[col]), str_token) == NULL)
+    col = 0;
+
+  col = strstr(&(str_line[col]), str_token) - str_line;
+  // printf("==>=>=>bot:%s\ntok:%s\n-ptr:%s-cur:%s\n-pos:%s\n-lim:%s\n-top:%s\n-eof:%s\n", self_p->bot, self_p->tok, self_p->ptr, self_p->cur,
+  // self_p->pos, self_p->lim, self_p->top, self_p->eof);
+
+
+  //////////////////////////////////////////////////////
   /* set self.pos */
   pos = rb_iv_get(self, "@pos");
+
+  rb_funcall(pos, rb_intern("col_num="), 1, LONG2NUM(col));
+
+  col += 1;
+
+
+
   rb_funcall(pos, rb_intern("line_num="), 1, LONG2NUM(self_p->lineno));
   /* make token */
   token = rb_funcall(rb_const_get(cast_cParser, rb_intern("Token")),

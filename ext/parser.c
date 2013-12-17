@@ -149,6 +149,62 @@ VALUE cast_Parser_prepare_lexer(VALUE self, VALUE string) {
   return Qnil;
 }
 
+///// SPLIT
+
+char  is_separator(char c)
+{
+  return (c == '\n' || c == '\0');
+}
+
+int   calc_nbr_words(char *str)
+{
+  int i = 0;
+  int word = 0;
+  
+  for (; str[i] != '\0'; i++)
+  {
+    if (!is_separator(str[i]) && is_separator(str[i + 1]))
+      word++;
+  }
+  return word;
+}
+
+void  copy_words(char **tab, char *str)
+{
+  int i = 0;
+  int word = 0;
+  int start = 0;
+  int length = 0;
+  
+  for (; str[i] != '\0'; i++)
+  {
+    if (!is_separator(str[i]) && is_separator(str[i + 1]))
+    {
+      length = i - start + 1;
+      tab[word] = malloc(sizeof(**tab) * (length + 1));
+      strncpy(tab[word], str + start, length);
+      tab[word][length] = '\0';
+      word++;
+    }
+    if (is_separator(str[i]) && !is_separator(str[i + 1]))
+      start = i + 1;
+  }
+  tab[word] = NULL;
+}
+
+char  **split(char *str)
+{
+  char  **tab;
+  int   nbr_words;
+  
+  nbr_words = calc_nbr_words(str);
+  tab = malloc(sizeof(*tab) * (nbr_words + 1));
+  copy_words(tab, str);
+  return (tab);
+}
+
+///// \Split
+
 /* (Private.)  Called by #parse to get the next token (as required by
  * racc).  Returns a 2-element array: [TOKEN_SYM, VALUE].
  */
@@ -168,41 +224,27 @@ VALUE cast_Parser_next_token(VALUE self) {
     return Qnil;
 
   //////////////////////////////////////////////
-  size_t new_line;
+ 
+  int     diff = strlen(self_p->bot) - strlen(self_p->tok);
+   char    **my_file = split(self_p->bot);
+   char    **my_token = split(self_p->tok);
+   int     line = 0;
+   int     col = 0;
+   int     count = 0;
 
-  char* str_line = self_p->bot;
-  char* str_token = self_p->tok;
-
-  for (new_line = 0; new_line < (self_p->lineno - 1) && str_line; str_line = strstr(str_line, "\n") + 1, new_line++);
-
-  if (new_line > self_p->line)
-    self_p->col = 0;
-  self_p->line = new_line;
-
-  str_line = strdup(str_line);
-  str_token = strdup(str_token);
-  str_line[(strchr(str_line, '\n') ? strchr(str_line, '\n') : strchr(str_line, '\0')) - str_line] = '\0';
-  str_token[(strchr(str_token, '\n') ? strchr(str_token, '\n') : strchr(str_token, '\0')) - str_token] = '\0';
-
-  if (strstr(&(str_line[self_p->col]), str_token) == NULL)
-    self_p->col = 0;
-
-  self_p->col = strstr(&(str_line[self_p->col]), str_token) - str_line;
-  // printf("==>=>=>bot:%s\ntok:%s\n-ptr:%s-cur:%s\n-pos:%s\n-lim:%s\n-top:%s\n-eof:%s\n", self_p->bot, self_p->tok, self_p->ptr, self_p->cur,
-  // self_p->pos, self_p->lim, self_p->top, self_p->eof);
-
+   while (my_file[line] && count + strlen(my_file[line]) < diff)
+   {
+       count += strlen(my_file[line]) + 1;
+       line += 1;
+   }
+   col = diff - count;
 
   //////////////////////////////////////////////////////
   /* set self.pos */
   pos = rb_iv_get(self, "@pos");
 
-  rb_funcall(pos, rb_intern("col_num="), 1, LONG2NUM(self_p->col));
-
-  self_p->col += 1;
-
-
-
-  rb_funcall(pos, rb_intern("line_num="), 1, LONG2NUM(self_p->lineno));
+  rb_funcall(pos, rb_intern("col_num="), 1, LONG2NUM(col));
+  rb_funcall(pos, rb_intern("line_num="), 1, LONG2NUM(line + 1));
   /* make token */
   token = rb_funcall(rb_const_get(cast_cParser, rb_intern("Token")),
                      rb_intern("new"), 2,

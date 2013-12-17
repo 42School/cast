@@ -111,6 +111,8 @@ VALUE cast_Parser_alloc(VALUE klass) {
   ret_p->token = rb_ary_new2(2);
   rb_ary_push(ret_p->token, Qnil);
   rb_ary_push(ret_p->token, Qnil);
+  ret_p->line = 0;
+  ret_p->col  = 0;
   return ret;
 }
 
@@ -166,27 +168,26 @@ VALUE cast_Parser_next_token(VALUE self) {
     return Qnil;
 
   //////////////////////////////////////////////
-  static int line = 0;
-  static int col = 0;
-  int new_line;
+  size_t new_line;
+
   char* str_line = self_p->bot;
   char* str_token = self_p->tok;
 
   for (new_line = 0; new_line < (self_p->lineno - 1) && str_line; str_line = strstr(str_line, "\n") + 1, new_line++);
 
-  if (new_line > line)
-    col = 0;
-  line = new_line;
+  if (new_line > self_p->line)
+    self_p->col = 0;
+  self_p->line = new_line;
 
   str_line = strdup(str_line);
   str_token = strdup(str_token);
   str_line[(strchr(str_line, '\n') ? strchr(str_line, '\n') : strchr(str_line, '\0')) - str_line] = '\0';
   str_token[(strchr(str_token, '\n') ? strchr(str_token, '\n') : strchr(str_token, '\0')) - str_token] = '\0';
 
-  if (strstr(&(str_line[col]), str_token) == NULL)
-    col = 0;
+  if (strstr(&(str_line[self_p->col]), str_token) == NULL)
+    self_p->col = 0;
 
-  col = strstr(&(str_line[col]), str_token) - str_line;
+  self_p->col = strstr(&(str_line[self_p->col]), str_token) - str_line;
   // printf("==>=>=>bot:%s\ntok:%s\n-ptr:%s-cur:%s\n-pos:%s\n-lim:%s\n-top:%s\n-eof:%s\n", self_p->bot, self_p->tok, self_p->ptr, self_p->cur,
   // self_p->pos, self_p->lim, self_p->top, self_p->eof);
 
@@ -195,9 +196,9 @@ VALUE cast_Parser_next_token(VALUE self) {
   /* set self.pos */
   pos = rb_iv_get(self, "@pos");
 
-  rb_funcall(pos, rb_intern("col_num="), 1, LONG2NUM(col));
+  rb_funcall(pos, rb_intern("col_num="), 1, LONG2NUM(self_p->col));
 
-  col += 1;
+  self_p->col += 1;
 
 
 

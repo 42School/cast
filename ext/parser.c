@@ -163,7 +163,7 @@ int   calc_nbr_words(char *str)
   
   for (; str[i] != '\0'; i++)
   {
-    if (!is_separator(str[i]) && is_separator(str[i + 1]))
+    if (is_separator(str[i]))
       word++;
   }
   return word;
@@ -178,16 +178,17 @@ void  copy_words(char **tab, char *str)
   
   for (; str[i] != '\0'; i++)
   {
-    if (!is_separator(str[i]) && is_separator(str[i + 1]))
+    if (is_separator(str[i]))
     {
-      length = i - start + 1;
+      length = i - start;
       tab[word] = malloc(sizeof(**tab) * (length + 1));
       strncpy(tab[word], str + start, length);
       tab[word][length] = '\0';
       word++;
-    }
-    if (is_separator(str[i]) && !is_separator(str[i + 1]))
       start = i + 1;
+    }
+//    if (!is_separator(str[i]))
+  //    start = i;
   }
   tab[word] = NULL;
 }
@@ -198,6 +199,8 @@ char  **split(char *str)
   int   nbr_words;
   
   nbr_words = calc_nbr_words(str);
+ // printf("nbr_words => %d\n", nbr_words);
+
   tab = malloc(sizeof(*tab) * (nbr_words + 1));
   copy_words(tab, str);
   return (tab);

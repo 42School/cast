@@ -35,6 +35,7 @@ extern VALUE cast_eParseError;
 typedef struct {
   /* stuff used by yylex */
   char *bot, *tok, *ptr, *cur, *pos, *lim, *top, *eof;
+  char **file;
   long  lineno;      /* line number */
   VALUE token;       /* last token (2-element array) */
   size_t	line, col;

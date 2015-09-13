@@ -124,30 +124,6 @@ void cast_Parser_free(cast_Parser *parser) {
   /* nothing to do */
 }
 
-/* (Private.)  Called by #parse to prepare for lexing.
- */
-VALUE cast_Parser_prepare_lexer(VALUE self, VALUE string) {
-  cast_Parser *self_p;
-  char *b, *e;
-
-  Get_Struct(self, Parser, self_p);
-  string = rb_convert_type(string, T_STRING, "String", "to_s");
-
-  b = RSTRING_PTR(string);
-  e = b + RSTRING_LEN(string) + 1;
-
-  self_p->bot = b;
-  self_p->tok = b;
-  self_p->ptr = b;
-  self_p->cur = b;
-  self_p->pos = b;
-  self_p->lim = e;
-  self_p->top = e;
-  self_p->eof = e;
-  self_p->lineno = 1;
-
-  return Qnil;
-}
 
 ///// SPLIT
 
@@ -211,6 +187,34 @@ void  freetab(char **tab)
 
 ///// \Split
 
+
+/* (Private.)  Called by #parse to prepare for lexing.
+ */
+VALUE cast_Parser_prepare_lexer(VALUE self, VALUE string) {
+  cast_Parser *self_p;
+  char *b, *e;
+
+  Get_Struct(self, Parser, self_p);
+  string = rb_convert_type(string, T_STRING, "String", "to_s");
+
+
+  b = RSTRING_PTR(string);
+  e = b + RSTRING_LEN(string) + 1;
+
+  self_p->file = split(b);
+  self_p->bot = b;
+  self_p->tok = b;
+  self_p->ptr = b;
+  self_p->cur = b;
+  self_p->pos = b;
+  self_p->lim = e;
+  self_p->top = e;
+  self_p->eof = e;
+  self_p->lineno = 1;
+
+  return Qnil;
+}
+
 /* (Private.)  Called by #parse to get the next token (as required by
  * racc).  Returns a 2-element array: [TOKEN_SYM, VALUE].
  */
@@ -227,23 +231,24 @@ VALUE cast_Parser_next_token(VALUE self) {
 
   /* return nil if EOF */
   if (rb_ary_entry(self_p->token, 0) == Qnil)
+  {
+    freetab(self_p->file);
     return Qnil;
+  }
 
   //////////////////////////////////////////////
 
   int     diff = strlen(self_p->bot) - strlen(self_p->tok);
-  char    **my_file = split(self_p->bot);
   int     line = 0;
   int     col = 0;
   int     count = 0;
 
-  while (my_file[line] && count + strlen(my_file[line]) < diff)
+  while (self_p->file[line] && count + strlen(self_p->file[line]) < diff)
   {
-      count += strlen(my_file[line]) + 1;
+      count += strlen(self_p->file[line]) + 1;
       line += 1;
   }
   col = diff - count;
-  freetab(my_file);
 
   //////////////////////////////////////////////////////
   /* set self.pos */

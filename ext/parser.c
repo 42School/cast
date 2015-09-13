@@ -187,8 +187,6 @@ void  copy_words(char **tab, char *str)
       word++;
       start = i + 1;
     }
-//    if (!is_separator(str[i]))
-  //    start = i;
   }
   tab[word] = NULL;
 }
@@ -199,11 +197,16 @@ char  **split(char *str)
   int   nbr_words;
   
   nbr_words = calc_nbr_words(str);
- // printf("nbr_words => %d\n", nbr_words);
-
   tab = malloc(sizeof(*tab) * (nbr_words + 1));
   copy_words(tab, str);
   return (tab);
+}
+
+void  freetab(char **tab)
+{
+  for (int i = 0; tab[i]; i++)
+    free(tab[i]);
+  free(tab);
 }
 
 ///// \Split
@@ -227,20 +230,20 @@ VALUE cast_Parser_next_token(VALUE self) {
     return Qnil;
 
   //////////////////////////////////////////////
- 
-  int     diff = strlen(self_p->bot) - strlen(self_p->tok);
-   char    **my_file = split(self_p->bot);
-   char    **my_token = split(self_p->tok);
-   int     line = 0;
-   int     col = 0;
-   int     count = 0;
 
-   while (my_file[line] && count + strlen(my_file[line]) < diff)
-   {
-       count += strlen(my_file[line]) + 1;
-       line += 1;
-   }
-   col = diff - count;
+  int     diff = strlen(self_p->bot) - strlen(self_p->tok);
+  char    **my_file = split(self_p->bot);
+  int     line = 0;
+  int     col = 0;
+  int     count = 0;
+
+  while (my_file[line] && count + strlen(my_file[line]) < diff)
+  {
+      count += strlen(my_file[line]) + 1;
+      line += 1;
+  }
+  col = diff - count;
+  freetab(my_file);
 
   //////////////////////////////////////////////////////
   /* set self.pos */

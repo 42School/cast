@@ -180,7 +180,9 @@ char  **split(char *str)
 
 void  freetab(char **tab)
 {
-  for (int i = 0; tab[i]; i++)
+  int i;
+  
+  for (i = 0; tab[i]; i++)
     free(tab[i]);
   free(tab);
 }

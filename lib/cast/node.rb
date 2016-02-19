@@ -728,7 +728,7 @@ module C
         @col_num  = col_num
       end
       def to_s
-        (@filename ? "#@filename:" : '') << "#@line_num:#@col_num"
+        (@filename ? "#@filename:" : '') + "#@line_num:#@col_num"
       end
       def <=>(x)
         return nil if self.filename != x.filename

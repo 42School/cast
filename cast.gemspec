@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.license = 'MIT'
   gem.date = Time.now.strftime('%Y-%m-%d')
   gem.summary = "C parser and AST constructor."
-  gem.homepage = 'http://github.com/oggy/cast'
+  gem.homepage = 'https://github.com/mathieumahe/cast'
 
   gem.extensions    = ["ext/extconf.rb"]
   gem.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
